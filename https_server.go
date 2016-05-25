@@ -5,10 +5,25 @@ import (
 	"reflect"
 	"syscall"
   "crypto/tls"
+	"crypto/rsa"
   "fmt"
   "net"
   "net/http"
 )
+const certFile = "./server.pem"
+const keyFile = "./server.key"
+var cert tls.Certificate
+var privateKey rsa.PrivateKey
+
+func loadPrivateKey() {
+	cert, _ = tls.LoadX509KeyPair(certFile,keyFile)
+	prk, ok := cert.PrivateKey.(*rsa.PrivateKey)
+	if (ok !=true){
+		fmt.Println(ok)
+	}
+	fmt.Println("load private key success")
+	fmt.Println("primes:",prk.Primes[0].String())
+}
 
 func getConn(c *tls.Conn) net.Conn{
 		pointerVal := reflect.ValueOf(c)
@@ -39,10 +54,11 @@ func main() {
 			fmt.Println(ferr)
 		}
 		intval, err := syscall.GetsockoptInt(int(fd), syscall.SOL_TCP, 26)
+		err_str := "None"
 		if err != nil{
-			panic(err)
+			err_str = fmt.Sprintf("%v",err)
 		}
-		s := fmt.Sprintf("https server\nFD: %d\n option: %v\n", fd, intval)
+		s := fmt.Sprintf("https server\nFD: %d\n option: %v\nSockOptErr:%s\n", fd, intval, err_str)
     conn.Write([]byte{})
 		fmt.Fprintf(conn, "HTTP/1.1 200 OK\nContent-Length:%d\n\n", len(s))
     _, err = conn.Write([]byte(s))
@@ -60,7 +76,8 @@ func main() {
 		conn.Close()
   })
 
-  err := http.ListenAndServeTLS(":443", "./server.pem", "./server.key", nil)
+	loadPrivateKey()
+  err := http.ListenAndServeTLS(":443", certFile, keyFile, nil)
   if err != nil {
     panic(err)
   }
