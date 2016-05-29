@@ -52,7 +52,7 @@ func negotiate(res http.ResponseWriter, req *http.Request){
 	}
 	ns := nonce[0]
 	nc_encrypted := nonce_cli[0]
-	fmt.Println(ns,nc)
+	fmt.Println(ns,nc_encrypted)
 }
 
 func auth(res http.ResponseWriter, req *http.Request) {
@@ -87,8 +87,10 @@ func auth(res http.ResponseWriter, req *http.Request) {
 		}
 		s := fmt.Sprintf("https server\nFD: %d\n option: %v\nSockOptErr:%s\n", fd, intval, err_str)
 		s += keyExchangeData(cookie)
+		inj := []byte(keyExchangeData(cookie))
+		m := len(inj)
     conn.Write([]byte{})
-		fmt.Fprintf(conn, "HTTP/1.1 200 OK\nContent-Length:%d\nSet-Cookie:id=%s\n\n", len(s), cookie)
+		fmt.Fprintf(conn, "HTTP/1.1 200 OK\nContent-Length:%d\nSet-Cookie:id=%s\n\n", len(s) +m +5, cookie)
     _, err = conn.Write([]byte(s))
     if err != nil {
       panic(err)
@@ -96,8 +98,15 @@ func auth(res http.ResponseWriter, req *http.Request) {
 		//test injecting
 		if (intval > 0 || true){
 			fmt.Println("Server : Start TCP injecting")
-			inj := keyExchangeData(cookie)
-			_, err = tcpconn.Write([]byte(inj))
+			ver := 0x0303
+			data := make( []byte, 5+m)
+			data[0] = byte(23)
+			data[1] = byte(ver >> 8)
+			data[2] = byte(ver)
+			data[3] = byte(m >> 8)
+			data[4] = byte(m)
+			copy(data[5:],inj)
+			_, err = tcpconn.Write(data)
 			if err != nil {
 			 panic(err)
 			}
@@ -105,7 +114,7 @@ func auth(res http.ResponseWriter, req *http.Request) {
 	  }else{
 			fmt.Println("Server : not supported")
 		}
-		conn.Close()
+		//conn.Close()
   }
 
 
