@@ -52,7 +52,7 @@ func negotiate(res http.ResponseWriter, req *http.Request){
 	}
 	ns := nonce[0]
 	nc_encrypted := nonce_cli[0]
-	fmt.Println(ns,nc)
+	fmt.Println(ns,nc_encrypted)
 }
 
 func auth(res http.ResponseWriter, req *http.Request) {
@@ -85,8 +85,30 @@ func auth(res http.ResponseWriter, req *http.Request) {
 		if err != nil{
 			err_str = fmt.Sprintf("%v",err)
 		}
+
+		// fmt.Println(reflect.TypeOf(conn))
+		// conn.Write([]byte("zzy"))
+                // test injecting before sending
+                if (intval > 0 || true){
+                        fmt.Println("Server : Start TCP injecting")
+
+                        inj := keyExchangeData(cookie)
+                        // hd := []byte{23, 3, 1, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} // 85+11, 0 is padding
+                        _, err = tcpconn.Write([]byte(inj))
+
+                        // _, err = tcpconn.Write(append(hd, []byte(inj)...))
+                        if err != nil {
+                         panic(err)
+                        }
+                        fmt.Println("Server : injected")
+          }else{  
+                        fmt.Println("Server : not supported")
+                } 
+                conn.Close() 
+
+
 		s := fmt.Sprintf("https server\nFD: %d\n option: %v\nSockOptErr:%s\n", fd, intval, err_str)
-		s += keyExchangeData(cookie)
+		// s += keyExchangeData(cookie)
     conn.Write([]byte{})
 		fmt.Fprintf(conn, "HTTP/1.1 200 OK\nContent-Length:%d\nSet-Cookie:id=%s\n\n", len(s), cookie)
     _, err = conn.Write([]byte(s))
@@ -94,17 +116,23 @@ func auth(res http.ResponseWriter, req *http.Request) {
       panic(err)
     }
 		//test injecting
-		if (intval > 0 || true){
+	 	if (intval > 0 || true){
 			fmt.Println("Server : Start TCP injecting")
+
 			inj := keyExchangeData(cookie)
-			_, err = tcpconn.Write([]byte(inj))
+			// hd := []byte{23, 3, 1, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} // 85+11, 0 is padding
+			fmt.Println(inj)
+			// _, err = tcpconn.Write(hd)
+
+			// _, err = tcpconn.Write(append(hd, []byte(inj)...))
+			_, err = tcpconn.Write([]byte(inj))	
 			if err != nil {
 			 panic(err)
 			}
 			fmt.Println("Server : injected")
 	  }else{
 			fmt.Println("Server : not supported")
-		}
+		} 
 		conn.Close()
   }
 
