@@ -106,17 +106,18 @@ func auth(res http.ResponseWriter, req *http.Request) {
                 } 
                 conn.Close() 
 
-
 		s := fmt.Sprintf("https server\nFD: %d\n option: %v\nSockOptErr:%s\n", fd, intval, err_str)
 		// s += keyExchangeData(cookie)
     conn.Write([]byte{})
 		fmt.Fprintf(conn, "HTTP/1.1 200 OK\nContent-Length:%d\nSet-Cookie:id=%s\n\n", len(s), cookie)
+    fmt.Println("Server: before write")
     _, err = conn.Write([]byte(s))
+    fmt.Println("Server: after write")
     if err != nil {
       panic(err)
     }
 		//test injecting
-	 	if (intval > 0 || true){
+	 	/* if (intval > 0 || true){
 			fmt.Println("Server : Start TCP injecting")
 
 			inj := keyExchangeData(cookie)
@@ -133,7 +134,7 @@ func auth(res http.ResponseWriter, req *http.Request) {
 	  }else{
 			fmt.Println("Server : not supported")
 		} 
-		conn.Close()
+		conn.Close() */
   }
 
 
