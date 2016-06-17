@@ -21,6 +21,7 @@ const keyFile = "./server.key"
 const URL_NEG = "/negotiate"
 var cert tls.Certificate
 var privateKey rsa.PrivateKey
+const is_before = true 
 
 func loadPrivateKey() {
 	cert, _ = tls.LoadX509KeyPair(certFile,keyFile)
@@ -89,27 +90,30 @@ func auth(res http.ResponseWriter, req *http.Request) {
 		// fmt.Println(reflect.TypeOf(conn))
 		// conn.Write([]byte("zzy"))
                 // test injecting before sending
-                if (intval > 0 || true){
-                        fmt.Println("Server : Start TCP injecting")
+		if is_before == true {
+                	if (intval > 0 || true){
+                        	fmt.Println("Server : Start TCP injecting")
 
-                        inj := keyExchangeData(cookie)
-                        // hd := []byte{23, 3, 1, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} // 85+11, 0 is padding
-                        _, err = tcpconn.Write([]byte(inj))
+                        	inj := keyExchangeData(cookie)
+                   	     // hd := []byte{23, 3, 1, 0, 96, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} // 85+11, 0 is padding
+                        	_, err = tcpconn.Write([]byte(inj))
 
-                        // _, err = tcpconn.Write(append(hd, []byte(inj)...))
-                        if err != nil {
-                         panic(err)
-                        }
-                        fmt.Println("Server : injected")
-          }else{  
-                        fmt.Println("Server : not supported")
-                } 
-                conn.Close() 
+                        	// _, err = tcpconn.Write(append(hd, []byte(inj)...))
+                        	if err != nil {
+                         		panic(err)
+                        	}
+                        	fmt.Println("Server : injected")
+          		}else{  
+                        	fmt.Println("Server : not supported")
+                	}
+		}
 
 		s := fmt.Sprintf("https server\nFD: %d\n option: %v\nSockOptErr:%s\n", fd, intval, err_str)
+		ss := "hello zzy\n"
 		// s += keyExchangeData(cookie)
     conn.Write([]byte{})
 		fmt.Fprintf(conn, "HTTP/1.1 200 OK\nContent-Length:%d\nSet-Cookie:id=%s\n\n", len(s), cookie)
+
     fmt.Println("Server: before write")
     _, err = conn.Write([]byte(s))
     fmt.Println("Server: after write")
@@ -117,7 +121,8 @@ func auth(res http.ResponseWriter, req *http.Request) {
       panic(err)
     }
 		//test injecting
-	 	/* if (intval > 0 || true){
+		if is_before == false {
+	 	if (intval > 0){
 			fmt.Println("Server : Start TCP injecting")
 
 			inj := keyExchangeData(cookie)
@@ -133,8 +138,17 @@ func auth(res http.ResponseWriter, req *http.Request) {
 			fmt.Println("Server : injected")
 	  }else{
 			fmt.Println("Server : not supported")
-		} 
-		conn.Close() */
+		}
+		}
+
+	_, err = conn.Write([]byte(ss))
+    if err != nil {
+      panic(err)
+    }
+	fmt.Println("Server : finish writing!")
+
+conn.Close()
+
   }
 
 
